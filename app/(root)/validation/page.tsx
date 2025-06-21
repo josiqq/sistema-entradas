@@ -1,6 +1,6 @@
 "use client"
 
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -18,8 +18,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { QrCode, Search, CheckCircle, XCircle, AlertTriangle, Camera, Scan, Clock, User, Calendar } from "lucide-react"
 import { useState } from "react"
+import { UserMenu } from "@/components/user-menu"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function ValidationPage() {
+  const { user } = useAuth()
   const [qrInput, setQrInput] = useState("")
   const [validationResult, setValidationResult] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
@@ -106,7 +109,7 @@ export default function ValidationPage() {
   }
 
   return (
-    <SidebarInset>
+    <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -122,6 +125,9 @@ export default function ValidationPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
+        </div>
+        <div className="ml-auto px-4">
+          <UserMenu />
         </div>
       </header>
 
@@ -368,6 +374,6 @@ export default function ValidationPage() {
           </Card>
         </div>
       </div>
-    </SidebarInset>
+    </>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -37,8 +37,11 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, Filter, MoreHorizontal, Edit, Copy, Trash2, Calendar, MapPin, Users, Ticket } from "lucide-react"
 import { useState } from "react"
+import { UserMenu } from "@/components/user-menu"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function EventsPage() {
+  const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
@@ -119,7 +122,7 @@ export default function EventsPage() {
   )
 
   return (
-    <SidebarInset>
+    <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -135,7 +138,11 @@ export default function EventsPage() {
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-        </div>
+          </div>
+          <div className="ml-auto px-4">
+            <UserMenu />
+          </div>
+        
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -343,6 +350,6 @@ export default function EventsPage() {
           </CardContent>
         </Card>
       </div>
-    </SidebarInset>
+    </>
   )
 }

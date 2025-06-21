@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
-import { Separator } from "@/components/ui/separator"
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,12 +9,25 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "@/components/ui/breadcrumb";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +35,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -31,9 +44,15 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Plus,
   Search,
@@ -46,12 +65,15 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-} from "lucide-react"
-import { useState } from "react"
+} from "lucide-react";
+import { useState } from "react";
+import { UserMenu } from "@/components/user-menu";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function TicketsPage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
+  const { user } = useAuth();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
 
   const tickets = [
     {
@@ -102,46 +124,48 @@ export default function TicketsPage() {
       qrCode: "QR123456792",
       scanned: false,
     },
-  ]
+  ];
 
   const getStatusBadge = (status: string, scanned: boolean) => {
     if (scanned) {
-      return <Badge className="bg-green-100 text-green-800">Escaneada</Badge>
+      return <Badge className="bg-green-100 text-green-800">Escaneada</Badge>;
     }
     switch (status) {
       case "Válida":
-        return <Badge className="bg-blue-100 text-blue-800">Válida</Badge>
+        return <Badge className="bg-blue-100 text-blue-800">Válida</Badge>;
       case "Pendiente":
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+        return (
+          <Badge className="bg-yellow-100 text-yellow-800">Pendiente</Badge>
+        );
       case "Cancelada":
-        return <Badge className="bg-red-100 text-red-800">Cancelada</Badge>
+        return <Badge className="bg-red-100 text-red-800">Cancelada</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>
+        return <Badge variant="secondary">{status}</Badge>;
     }
-  }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "VIP":
-        return "bg-purple-100 text-purple-800"
+        return "bg-purple-100 text-purple-800";
       case "General":
-        return "bg-blue-100 text-blue-800"
+        return "bg-blue-100 text-blue-800";
       case "Estudiante":
-        return "bg-green-100 text-green-800"
+        return "bg-green-100 text-green-800";
       default:
-        return "bg-gray-100 text-gray-800"
+        return "bg-gray-100 text-gray-800";
     }
-  }
+  };
 
   const filteredTickets = tickets.filter(
     (ticket) =>
       ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       ticket.holder.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.event.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+      ticket.event.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <SidebarInset>
+    <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -158,17 +182,27 @@ export default function TicketsPage() {
             </BreadcrumbList>
           </Breadcrumb>
         </div>
+        <div className="ml-auto px-4">
+          <UserMenu />
+        </div>
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         {/* Header Actions */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Gestión de Entradas</h1>
-            <p className="text-muted-foreground">Administra y controla todas las entradas del sistema</p>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Gestión de Entradas
+            </h1>
+            <p className="text-muted-foreground">
+              Administra y controla todas las entradas del sistema
+            </p>
           </div>
           <div className="flex gap-2">
-            <Dialog open={isGenerateDialogOpen} onOpenChange={setIsGenerateDialogOpen}>
+            <Dialog
+              open={isGenerateDialogOpen}
+              onOpenChange={setIsGenerateDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
@@ -178,7 +212,10 @@ export default function TicketsPage() {
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                   <DialogTitle>Generar Entradas Masivamente</DialogTitle>
-                  <DialogDescription>Genera múltiples entradas con códigos QR únicos para un evento</DialogDescription>
+                  <DialogDescription>
+                    Genera múltiples entradas con códigos QR únicos para un
+                    evento
+                  </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -190,9 +227,15 @@ export default function TicketsPage() {
                         <SelectValue placeholder="Selecciona un evento" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tech2024">Conferencia Tech 2024</SelectItem>
-                        <SelectItem value="festival">Festival de Música</SelectItem>
-                        <SelectItem value="workshop">Workshop de Diseño</SelectItem>
+                        <SelectItem value="tech2024">
+                          Conferencia Tech 2024
+                        </SelectItem>
+                        <SelectItem value="festival">
+                          Festival de Música
+                        </SelectItem>
+                        <SelectItem value="workshop">
+                          Workshop de Diseño
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -215,17 +258,30 @@ export default function TicketsPage() {
                     <Label htmlFor="quantity" className="text-right">
                       Cantidad
                     </Label>
-                    <Input id="quantity" type="number" className="col-span-3" placeholder="Número de entradas" />
+                    <Input
+                      id="quantity"
+                      type="number"
+                      className="col-span-3"
+                      placeholder="Número de entradas"
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="price" className="text-right">
                       Precio
                     </Label>
-                    <Input id="price" type="number" className="col-span-3" placeholder="Precio por entrada" />
+                    <Input
+                      id="price"
+                      type="number"
+                      className="col-span-3"
+                      placeholder="Precio por entrada"
+                    />
                   </div>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" onClick={() => setIsGenerateDialogOpen(false)}>
+                  <Button
+                    type="submit"
+                    onClick={() => setIsGenerateDialogOpen(false)}
+                  >
                     Generar Entradas
                   </Button>
                 </DialogFooter>
@@ -242,17 +298,23 @@ export default function TicketsPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Entradas</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Entradas
+              </CardTitle>
               <QrCode className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">2,847</div>
-              <p className="text-xs text-muted-foreground">+12% vs mes anterior</p>
+              <p className="text-xs text-muted-foreground">
+                +12% vs mes anterior
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Entradas Válidas</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Entradas Válidas
+              </CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
@@ -303,7 +365,9 @@ export default function TicketsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Lista de Entradas</CardTitle>
-            <CardDescription>{filteredTickets.length} entradas encontradas</CardDescription>
+            <CardDescription>
+              {filteredTickets.length} entradas encontradas
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
@@ -323,18 +387,28 @@ export default function TicketsPage() {
                 {filteredTickets.map((ticket) => (
                   <TableRow key={ticket.id}>
                     <TableCell className="font-mono">{ticket.id}</TableCell>
-                    <TableCell className="font-medium">{ticket.event}</TableCell>
+                    <TableCell className="font-medium">
+                      {ticket.event}
+                    </TableCell>
                     <TableCell>
                       <div>
                         <div className="font-medium">{ticket.holder}</div>
-                        <div className="text-sm text-muted-foreground">{ticket.email}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {ticket.email}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={getTypeColor(ticket.type)}>{ticket.type}</Badge>
+                      <Badge className={getTypeColor(ticket.type)}>
+                        {ticket.type}
+                      </Badge>
                     </TableCell>
-                    <TableCell>{getStatusBadge(ticket.status, ticket.scanned)}</TableCell>
-                    <TableCell className="font-medium">${ticket.price}</TableCell>
+                    <TableCell>
+                      {getStatusBadge(ticket.status, ticket.scanned)}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      ${ticket.price}
+                    </TableCell>
                     <TableCell>{ticket.purchaseDate}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -373,6 +447,6 @@ export default function TicketsPage() {
           </CardContent>
         </Card>
       </div>
-    </SidebarInset>
-  )
+    </>
+  );
 }

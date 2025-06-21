@@ -1,3 +1,4 @@
+// app/(root)/page.tsx
 "use client"
 
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
@@ -29,8 +30,12 @@ import {
   Filter,
 } from "lucide-react"
 import { StatsChart } from "@/components/stats-chart"
+import { UserMenu } from "@/components/user-menu"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function Dashboard() {
+  const { user } = useAuth()
+
   const stats = [
     {
       title: "Eventos Activos",
@@ -58,7 +63,7 @@ export default function Dashboard() {
     },
     {
       title: "Ingresos Totales",
-      value: "Gs. 1.000.000",
+      value: "$45,230",
       change: "+12% vs mes anterior",
       icon: TrendingUp,
       color: "text-orange-600",
@@ -74,7 +79,7 @@ export default function Dashboard() {
       status: "Activo",
       sold: 450,
       total: 500,
-      revenue: "Gs. 2.000.000",
+      revenue: "$22,500",
     },
     {
       id: 2,
@@ -83,7 +88,7 @@ export default function Dashboard() {
       status: "Vendiendo",
       sold: 1200,
       total: 2000,
-      revenue: "Gs. 6.000.000",
+      revenue: "$60,000",
     },
     {
       id: 3,
@@ -92,7 +97,7 @@ export default function Dashboard() {
       status: "Próximo",
       sold: 25,
       total: 50,
-      revenue: "Gs. 1.250.000",
+      revenue: "$1,250",
     },
   ]
 
@@ -110,7 +115,7 @@ export default function Dashboard() {
   }
 
   return (
-    <SidebarInset>
+    <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -128,15 +133,18 @@ export default function Dashboard() {
           </Breadcrumb>
         </div>
         <div className="ml-auto px-4">
-          <div className="flex items-center gap-2">
-            <Button size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Nuevo Evento
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar
-            </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Nuevo Evento
+              </Button>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Exportar
+              </Button>
+            </div>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -289,6 +297,6 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
-    </SidebarInset>
+    </>
   )
 }

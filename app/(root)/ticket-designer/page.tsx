@@ -1,6 +1,6 @@
 "use client"
 
-import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import {
   Breadcrumb,
@@ -49,20 +49,24 @@ import { useState } from "react"
 import { TicketPreview } from "@/components/ticket-preview"
 import { TemplateGallery } from "@/components/template-gallery"
 import { ColorPicker } from "@/components/color-picker"
+import { UserMenu } from "@/components/user-menu"
+import { useAuth } from "@/contexts/auth-context"
 
 export default function TicketDesignerPage() {
+  const { user } = useAuth()
+
   const [selectedTemplate, setSelectedTemplate] = useState("modern")
   const [ticketData, setTicketData] = useState({
-    eventName: "Fiesta de San Juan",
-    date: "16 de Julio, 2025",
-    time: "20:00 PM",
-    location: "en el colegio boludo",
+    eventName: "Conferencia Tech 2024",
+    date: "15 de Febrero, 2024",
+    time: "09:00 AM",
+    location: "Centro de Convenciones",
     ticketNumber: "TK001234",
     ticketType: "VIP",
-    price: "Gs. 10.000",
+    price: "$75.00",
     qrCode: "QR123456789",
-    category: "Fiesta",
-    organizer: "Colegio Nacional de EMD San Roque Gonzalez de Santacruz",
+    category: "Tecnología",
+    organizer: "TechEvents Corp",
     logo: "/placeholder.svg?height=60&width=200",
   })
   const [designSettings, setDesignSettings] = useState({
@@ -109,7 +113,7 @@ export default function TicketDesignerPage() {
   }
 
   return (
-    <SidebarInset>
+    <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -127,23 +131,26 @@ export default function TicketDesignerPage() {
           </Breadcrumb>
         </div>
         <div className="ml-auto px-4">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setShowTemplateGallery(true)}>
-              <Layout className="h-4 w-4 mr-2" />
-              Plantillas
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSaveTemplate}>
-              <Save className="h-4 w-4 mr-2" />
-              Guardar
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleSharePreview}>
-              <Share2 className="h-4 w-4 mr-2" />
-              Compartir
-            </Button>
-            <Button size="sm" onClick={handleDownloadPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Descargar PDF
-            </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setShowTemplateGallery(true)}>
+                <Layout className="h-4 w-4 mr-2" />
+                Plantillas
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSaveTemplate}>
+                <Save className="h-4 w-4 mr-2" />
+                Guardar
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSharePreview}>
+                <Share2 className="h-4 w-4 mr-2" />
+                Compartir
+              </Button>
+              <Button size="sm" onClick={handleDownloadPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Descargar PDF
+              </Button>
+            </div>
+            <UserMenu />
           </div>
         </div>
       </header>
@@ -539,6 +546,6 @@ export default function TicketDesignerPage() {
         selectedTemplate={selectedTemplate}
         onSelectTemplate={setSelectedTemplate}
       />
-    </SidebarInset>
+    </>
   )
 }
