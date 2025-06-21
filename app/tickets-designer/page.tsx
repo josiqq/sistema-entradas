@@ -53,16 +53,16 @@ import { ColorPicker } from "@/components/color-picker"
 export default function TicketDesignerPage() {
   const [selectedTemplate, setSelectedTemplate] = useState("modern")
   const [ticketData, setTicketData] = useState({
-    eventName: "Conferencia Tech 2024",
-    date: "15 de Febrero, 2024",
-    time: "09:00 AM",
-    location: "Centro de Convenciones",
+    eventName: "Fiesta de San Juan",
+    date: "16 de Julio, 2025",
+    time: "20:00 PM",
+    location: "en el colegio boludo",
     ticketNumber: "TK001234",
     ticketType: "VIP",
-    price: "$75.00",
+    price: "Gs. 10.000",
     qrCode: "QR123456789",
-    category: "Tecnología",
-    organizer: "TechEvents Corp",
+    category: "Fiesta",
+    organizer: "Colegio Nacional de EMD San Roque Gonzalez de Santacruz",
     logo: "/placeholder.svg?height=60&width=200",
   })
   const [designSettings, setDesignSettings] = useState({

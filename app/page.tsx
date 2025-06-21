@@ -58,7 +58,7 @@ export default function Dashboard() {
     },
     {
       title: "Ingresos Totales",
-      value: "$45,230",
+      value: "$Gs. 1.000.000",
       change: "+12% vs mes anterior",
       icon: TrendingUp,
       color: "text-orange-600",
@@ -74,7 +74,7 @@ export default function Dashboard() {
       status: "Activo",
       sold: 450,
       total: 500,
-      revenue: "$22,500",
+      revenue: "Gs. 2.000.000",
     },
     {
       id: 2,
@@ -83,7 +83,7 @@ export default function Dashboard() {
       status: "Vendiendo",
       sold: 1200,
       total: 2000,
-      revenue: "$60,000",
+      revenue: "Gs. 6.000.000",
     },
     {
       id: 3,
@@ -92,7 +92,7 @@ export default function Dashboard() {
       status: "Próximo",
       sold: 25,
       total: 50,
-      revenue: "$1,250",
+      revenue: "Gs. 1.250.000",
     },
   ]
 
