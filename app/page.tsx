@@ -58,7 +58,7 @@ export default function Dashboard() {
     },
     {
       title: "Ingresos Totales",
-      value: "$Gs. 1.000.000",
+      value: "Gs. 1.000.000",
       change: "+12% vs mes anterior",
       icon: TrendingUp,
       color: "text-orange-600",
