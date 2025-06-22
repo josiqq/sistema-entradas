@@ -1,30 +1,31 @@
-generator client {
-  provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
-}
-
 datasource db {
-  provider = "mysql"
+  provider = "postgresql" // O "mysql", "sqlite", etc.
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id          String    @id @default(cuid()) // O @default(uuid()) si prefieres UUIDs
-  name        String
-  email       String    @unique
-  password    String // Agregado para el login
-  role        String
-  status      String
-  phone       String?
-  avatar      String?
-  lastAccess  DateTime? @map("last_access") // Convertido a Snake_case para la base de datos si usas MySQL/PostgreSQL
-  createdAt   DateTime  @default(now()) @map("created_at")
-  permissions String[] // Almacenar como un array de strings si tu DB lo soporta (ej. PostgreSQL), o JSON
-
-  @@map("Users") // Mapea el modelo a la tabla "Users" en la base de datos
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/client"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
-// Modelos existentes para Eventos y Tickets
+model User {
+  id            String         @id @default(cuid()) // O @default(uuid()) si prefieres UUIDs
+  name          String
+  email         String         @unique
+  password      String // Agregado para el login
+  role          String
+  status        String
+  phone         String?
+  avatar        String?
+  lastAccess    DateTime?      @map("last_access") // Convertido a Snake_case para la base de datos si usas MySQL/PostgreSQL
+  createdAt     DateTime       @default(now()) @map("created_at")
+  permissions   String[] // Almacenar como un array de strings si tu DB lo soporta (ej. PostgreSQL), o JSON
+  ticketDesigns TicketDesign[] // <-- CAMBIO: Añadido el campo de relación inverso
+
+  @@map("Users")
+}
+
 model Event {
   event_id    Int      @id @default(autoincrement()) @map("event_id")
   name        String   @db.VarChar(255)
@@ -45,22 +46,56 @@ model Event {
   @@map("Events")
 }
 
+model TicketDesign {
+  id              String   @id @default(cuid())
+  name            String
+  templateId      String
+  eventName       String
+  date            String
+  time            String
+  location        String
+  ticketNumber    String
+  ticketType      String
+  price           String
+  qrCode          String
+  category        String
+  organizer       String
+  logo            String?
+  primaryColor    String
+  secondaryColor  String
+  backgroundColor String
+  textColor       String
+  fontFamily      String
+  fontSize        Int
+  borderRadius    Int
+  orientation     String
+  format          String
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  Ticket          Ticket[]
+}
+
 model Ticket {
-  ticket_id    String    @id @db.VarChar(50) @map("ticket_id")
-  event_id     Int       @map("event_id")
-  holder_name  String    @db.VarChar(255)
-  holder_email String    @db.VarChar(255)
-  type         String    @db.VarChar(50)
-  price        Decimal   @db.Decimal(10, 2)
-  status       String    @db.VarChar(50)
-  purchase_date DateTime @db.Date
-  qr_code      String    @unique @db.VarChar(255)
-  is_scanned   Boolean   @default(false) @map("is_scanned")
-  scanned_time DateTime? @db.DateTime
-  gate_used    String?   @db.VarChar(50)
-  created_at   DateTime  @default(now()) @map("created_at")
-  updated_at   DateTime  @default(now()) @updatedAt @map("updated_at")
-  event        Event     @relation(fields: [event_id], references: [event_id])
+  ticket_id     String    @id @map("ticket_id") @db.VarChar(50)
+  event_id      Int       @map("event_id")
+  holder_name   String    @db.VarChar(255)
+  holder_email  String    @db.VarChar(255)
+  type          String    @db.VarChar(50)
+  price         Decimal   @db.Decimal(10, 2)
+  status        String    @db.VarChar(50)
+  purchase_date DateTime  @db.Date
+  qr_code       String    @unique @db.VarChar(255)
+  is_scanned    Boolean   @default(false) @map("is_scanned")
+  scanned_time  DateTime?
+  gate_used     String?   @db.VarChar(50)
+  created_at    DateTime  @default(now()) @map("created_at")
+  updated_at    DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  event          Event         @relation(fields: [event_id], references: [event_id])
+  ticketDesignId String?       @map("ticket_design_id")
+  ticketDesign   TicketDesign? @relation(fields: [ticketDesignId], references: [id])
 
   @@map("Tickets")
 }

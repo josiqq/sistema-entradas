@@ -66,68 +66,167 @@ import {
   XCircle,
   Clock,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UserMenu } from "@/components/user-menu";
 import { useAuth } from "@/contexts/auth-context";
+import { toast } from "sonner";
+
+interface TicketDesignOption {
+    id: string;
+    name: string;
+}
+
+interface EventData {
+  event_id: number;
+  name: string;
+}
+
+interface Ticket {
+  ticket_id: string;
+  event_id: number;
+  holder_name: string;
+  holder_email: string;
+  type: string;
+  price: number;
+  status: string;
+  purchase_date: string;
+  qr_code: string;
+  is_scanned: boolean;
+  scanned_time?: string;
+  gate_used?: string;
+  event: EventData;
+  ticketDesignId?: string;
+  ticketDesign?: TicketDesignOption;
+}
+
+interface EventOption {
+    event_id: number;
+    name: string;
+}
 
 export default function TicketsPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [events, setEvents] = useState<EventOption[]>([]);
+  const [ticketDesigns, setTicketDesigns] = useState<TicketDesignOption[]>([]);
   const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false);
+  const [generateTicketData, setGenerateTicketData] = useState({
+    eventId: '',
+    type: '',
+    quantity: '',
+    price: '',
+    holderName: '',
+    holderEmail: '',
+    ticketDesignId: '',
+  });
 
-  const tickets = [
-    {
-      id: "TK001234",
-      event: "Conferencia Tech 2024",
-      holder: "Juan Pérez",
-      email: "juan@email.com",
-      type: "VIP",
-      price: 75,
-      status: "Válida",
-      purchaseDate: "2024-01-15",
-      qrCode: "QR123456789",
-      scanned: false,
-    },
-    {
-      id: "TK001235",
-      event: "Festival de Música",
-      holder: "María García",
-      email: "maria@email.com",
-      type: "General",
-      price: 50,
-      status: "Válida",
-      purchaseDate: "2024-01-16",
-      qrCode: "QR123456790",
-      scanned: true,
-    },
-    {
-      id: "TK001236",
-      event: "Workshop de Diseño",
-      holder: "Carlos López",
-      email: "carlos@email.com",
-      type: "Estudiante",
-      price: 25,
-      status: "Pendiente",
-      purchaseDate: "2024-01-17",
-      qrCode: "QR123456791",
-      scanned: false,
-    },
-    {
-      id: "TK001237",
-      event: "Expo Gastronómica",
-      holder: "Ana Martínez",
-      email: "ana@email.com",
-      type: "General",
-      price: 30,
-      status: "Cancelada",
-      purchaseDate: "2024-01-18",
-      qrCode: "QR123456792",
-      scanned: false,
-    },
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [ticketsResponse, eventsResponse, designsResponse] = await Promise.all([
+          fetch('/api/tickets'),
+          fetch('/api/events'),
+          fetch('/api/ticket-designs'),
+        ]);
 
-  const getStatusBadge = (status: string, scanned: boolean) => {
-    if (scanned) {
+        if (!ticketsResponse.ok) throw new Error('Error al cargar los tickets');
+        const ticketsData: Ticket[] = await ticketsResponse.json();
+        setTickets(ticketsData);
+
+        if (!eventsResponse.ok) throw new Error('Error al cargar los eventos');
+        const eventsData: EventOption[] = await eventsResponse.json();
+        setEvents(eventsData.map(event => ({ event_id: event.event_id, name: event.name })));
+
+        if (!designsResponse.ok) throw new Error('Error al cargar los diseños de tickets');
+        const designsData: TicketDesignOption[] = await designsResponse.json();
+        setTicketDesigns(designsData.map(design => ({ id: design.id, name: design.name })));
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Error", {
+          description: "No se pudieron cargar los datos."
+        });
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleGenerateTicketInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setGenerateTicketData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleGenerateTicketSelectChange = (field: string, value: string) => {
+    setGenerateTicketData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleGenerateTickets = async () => {
+    try {
+      const response = await fetch('/api/tickets', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...generateTicketData,
+          eventId: parseInt(generateTicketData.eventId),
+          quantity: parseInt(generateTicketData.quantity),
+          price: parseFloat(generateTicketData.price),
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al generar entradas');
+      }
+
+      const newTickets: Ticket[] = await response.json();
+      setTickets(prev => [...prev, ...newTickets]);
+      setIsGenerateDialogOpen(false);
+      setGenerateTicketData({
+        eventId: '', type: '', quantity: '', price: '', holderName: '', holderEmail: '', ticketDesignId: ''
+      });
+      toast.success("Entradas generadas", {
+        description: `Se han generado ${newTickets.length} entradas exitosamente.`
+      });
+    } catch (error) {
+      console.error("Error generating tickets:", error);
+      toast.error("Error", {
+        description: (error as Error).message || "No se pudieron generar las entradas."
+      });
+    }
+  };
+
+  const handleCancelTicket = async (ticketId: string) => {
+    try {
+      const response = await fetch(`/api/tickets/${ticketId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'Cancelada' }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al cancelar la entrada');
+      }
+
+      const canceledTicket: Ticket = await response.json();
+      setTickets(prev => prev.map(ticket => ticket.ticket_id === canceledTicket.ticket_id ? canceledTicket : ticket));
+      toast.success("Entrada cancelada", {
+        description: `La entrada ${ticketId} ha sido cancelada.`
+      });
+    } catch (error) {
+      console.error("Error cancelling ticket:", error);
+      toast.error("Error", {
+        description: (error as Error).message || "No se pudo cancelar la entrada."
+      });
+    }
+  };
+
+  const getStatusBadge = (status: string, is_scanned: boolean) => {
+    if (is_scanned) {
       return <Badge className="bg-green-100 text-green-800">Escaneada</Badge>;
     }
     switch (status) {
@@ -159,10 +258,16 @@ export default function TicketsPage() {
 
   const filteredTickets = tickets.filter(
     (ticket) =>
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.holder.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.event.toLowerCase().includes(searchTerm.toLowerCase())
+      ticket.ticket_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.holder_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.event.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const totalTickets = tickets.length;
+  const validTickets = tickets.filter(t => t.status === 'Válida' && !t.is_scanned).length;
+  const scannedTickets = tickets.filter(t => t.is_scanned).length;
+  const pendingTickets = tickets.filter(t => t.status === 'Pendiente').length;
+
 
   return (
     <>
@@ -219,23 +324,19 @@ export default function TicketsPage() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="event" className="text-right">
+                    <Label htmlFor="eventId" className="text-right">
                       Evento
                     </Label>
-                    <Select>
+                    <Select value={generateTicketData.eventId} onValueChange={(val) => handleGenerateTicketSelectChange('eventId', val)}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Selecciona un evento" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="tech2024">
-                          Conferencia Tech 2024
-                        </SelectItem>
-                        <SelectItem value="festival">
-                          Festival de Música
-                        </SelectItem>
-                        <SelectItem value="workshop">
-                          Workshop de Diseño
-                        </SelectItem>
+                        {events.map((event) => (
+                            <SelectItem key={event.event_id} value={String(event.event_id)}>
+                                {event.name}
+                            </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -243,14 +344,15 @@ export default function TicketsPage() {
                     <Label htmlFor="type" className="text-right">
                       Tipo
                     </Label>
-                    <Select>
+                    <Select value={generateTicketData.type} onValueChange={(val) => handleGenerateTicketSelectChange('type', val)}>
                       <SelectTrigger className="col-span-3">
                         <SelectValue placeholder="Tipo de entrada" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="vip">VIP</SelectItem>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="estudiante">Estudiante</SelectItem>
+                        <SelectItem value="VIP">VIP</SelectItem>
+                        <SelectItem value="General">General</SelectItem>
+                        <SelectItem value="Estudiante">Estudiante</SelectItem>
+                        <SelectItem value="Premium">Premium</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -263,6 +365,8 @@ export default function TicketsPage() {
                       type="number"
                       className="col-span-3"
                       placeholder="Número de entradas"
+                      value={generateTicketData.quantity}
+                      onChange={handleGenerateTicketInputChange}
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
@@ -274,13 +378,57 @@ export default function TicketsPage() {
                       type="number"
                       className="col-span-3"
                       placeholder="Precio por entrada"
+                      value={generateTicketData.price}
+                      onChange={handleGenerateTicketInputChange}
                     />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="holderName" className="text-right">
+                      Nombre Titular
+                    </Label>
+                    <Input
+                      id="holderName"
+                      className="col-span-3"
+                      placeholder="Nombre del titular"
+                      value={generateTicketData.holderName}
+                      onChange={handleGenerateTicketInputChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="holderEmail" className="text-right">
+                      Email Titular
+                    </Label>
+                    <Input
+                      id="holderEmail"
+                      type="email"
+                      className="col-span-3"
+                      placeholder="email@example.com"
+                      value={generateTicketData.holderEmail}
+                      onChange={handleGenerateTicketInputChange}
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="ticketDesignId" className="text-right">
+                      Plantilla Diseño
+                    </Label>
+                    <Select value={generateTicketData.ticketDesignId} onValueChange={(val) => handleGenerateTicketSelectChange('ticketDesignId', val)}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecciona una plantilla (Opcional)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ticketDesigns.map((design) => (
+                            <SelectItem key={design.id} value={design.id}>
+                                {design.name}
+                            </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DialogFooter>
                   <Button
                     type="submit"
-                    onClick={() => setIsGenerateDialogOpen(false)}
+                    onClick={handleGenerateTickets}
                   >
                     Generar Entradas
                   </Button>
@@ -304,9 +452,9 @@ export default function TicketsPage() {
               <QrCode className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2,847</div>
+              <div className="text-2xl font-bold">{totalTickets}</div>
               <p className="text-xs text-muted-foreground">
-                +12% vs mes anterior
+                Tickets registrados
               </p>
             </CardContent>
           </Card>
@@ -318,8 +466,8 @@ export default function TicketsPage() {
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">2,456</div>
-              <p className="text-xs text-muted-foreground">86% del total</p>
+              <div className="text-2xl font-bold">{validTickets}</div>
+              <p className="text-xs text-muted-foreground">No escaneadas</p>
             </CardContent>
           </Card>
           <Card>
@@ -328,8 +476,8 @@ export default function TicketsPage() {
               <QrCode className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">1,923</div>
-              <p className="text-xs text-muted-foreground">78% de válidas</p>
+              <div className="text-2xl font-bold">{scannedTickets}</div>
+              <p className="text-xs text-muted-foreground">Tickets usados</p>
             </CardContent>
           </Card>
           <Card>
@@ -338,8 +486,8 @@ export default function TicketsPage() {
               <Clock className="h-4 w-4 text-yellow-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">234</div>
-              <p className="text-xs text-muted-foreground">8% del total</p>
+              <div className="text-2xl font-bold">{pendingTickets}</div>
+              <p className="text-xs text-muted-foreground">Por confirmar</p>
             </CardContent>
           </Card>
         </div>
@@ -385,16 +533,16 @@ export default function TicketsPage() {
               </TableHeader>
               <TableBody>
                 {filteredTickets.map((ticket) => (
-                  <TableRow key={ticket.id}>
-                    <TableCell className="font-mono">{ticket.id}</TableCell>
+                  <TableRow key={ticket.ticket_id}>
+                    <TableCell className="font-mono">{ticket.ticket_id}</TableCell>
                     <TableCell className="font-medium">
-                      {ticket.event}
+                      {ticket.event.name}
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="font-medium">{ticket.holder}</div>
+                        <div className="font-medium">{ticket.holder_name}</div>
                         <div className="text-sm text-muted-foreground">
-                          {ticket.email}
+                          {ticket.holder_email}
                         </div>
                       </div>
                     </TableCell>
@@ -404,12 +552,12 @@ export default function TicketsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {getStatusBadge(ticket.status, ticket.scanned)}
+                      {getStatusBadge(ticket.status, ticket.is_scanned)}
                     </TableCell>
                     <TableCell className="font-medium">
                       ${ticket.price}
                     </TableCell>
-                    <TableCell>{ticket.purchaseDate}</TableCell>
+                    <TableCell>{new Date(ticket.purchase_date).toLocaleDateString('es-ES')}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -433,7 +581,10 @@ export default function TicketsPage() {
                             Imprimir
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleCancelTicket(ticket.ticket_id)}
+                          >
                             <XCircle className="mr-2 h-4 w-4" />
                             Cancelar
                           </DropdownMenuItem>

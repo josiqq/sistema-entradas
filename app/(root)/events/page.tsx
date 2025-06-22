@@ -36,69 +36,187 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, Search, Filter, MoreHorizontal, Edit, Copy, Trash2, Calendar, MapPin, Users, Ticket } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { UserMenu } from "@/components/user-menu"
 import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+
+interface Event {
+  event_id: number;
+  name: string;
+  description?: string;
+  date: string;
+  time: string;
+  location: string;
+  capacity: number;
+  price: number;
+  status: string;
+  category?: string;
+  organizer?: string;
+  logo_url?: string;
+  sold?: number;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function EventsPage() {
   const { user } = useAuth()
   const [searchTerm, setSearchTerm] = useState("")
+  const [events, setEvents] = useState<Event[]>([])
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [newEventoData, setNewEventoData] = useState({
+    name: "",
+    description: "",
+    category: "",
+    date: "",
+    time: "",
+    location: "",
+    capacity: "",
+    price: "",
+  })
+  const [editingEvent, setEditingEvent] = useState<Event | null>(null);
 
-  const events = [
-    {
-      id: 1,
-      name: "Conferencia Tech 2024",
-      description: "La conferencia de tecnología más importante del año",
-      date: "2024-02-15",
-      time: "09:00",
-      location: "Centro de Convenciones",
-      capacity: 500,
-      sold: 450,
-      price: 50,
-      status: "Activo",
-      category: "Tecnología",
-    },
-    {
-      id: 2,
-      name: "Festival de Música",
-      description: "Festival de música con artistas internacionales",
-      date: "2024-02-20",
-      time: "18:00",
-      location: "Parque Central",
-      capacity: 2000,
-      sold: 1200,
-      price: 75,
-      status: "Vendiendo",
-      category: "Música",
-    },
-    {
-      id: 3,
-      name: "Workshop de Diseño",
-      description: "Taller intensivo de diseño UX/UI",
-      date: "2024-02-25",
-      time: "10:00",
-      location: "Aula Magna Universidad",
-      capacity: 50,
-      sold: 25,
-      price: 25,
-      status: "Próximo",
-      category: "Educación",
-    },
-    {
-      id: 4,
-      name: "Expo Gastronómica",
-      description: "Exposición de gastronomía local e internacional",
-      date: "2024-03-01",
-      time: "12:00",
-      location: "Plaza de Armas",
-      capacity: 1000,
-      sold: 0,
-      price: 30,
-      status: "Borrador",
-      category: "Gastronomía",
-    },
-  ]
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch('/api/events');
+        if (!response.ok) {
+          throw new Error('Error al cargar los eventos');
+        }
+        const data: Event[] = await response.json();
+        // Ajustar el formato de fecha y hora para la UI si es necesario
+        const formattedData = data.map(event => ({
+          ...event,
+          date: new Date(event.date).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+          time: new Date(event.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          // Simular 'sold' hasta que se implemente la lógica de tickets
+          sold: Math.floor(Math.random() * event.capacity),
+        }));
+        setEvents(formattedData);
+      } catch (error) {
+        console.error("Error fetching events:", error);
+        toast.error("Error", {
+          description: "No se pudieron cargar los eventos."
+        });
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { id, value } = e.target;
+    setNewEventoData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (field: string, value: string) => {
+    setNewEventoData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleCreateEvent = async () => {
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newEventoData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear el evento');
+      }
+
+      const newEvent: Event = await response.json();
+      const formattedNewEvent = {
+        ...newEvent,
+        date: new Date(newEvent.date).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+        time: new Date(newEvent.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        sold: Math.floor(Math.random() * newEvent.capacity),
+      };
+      setEvents(prev => [...prev, formattedNewEvent]);
+      setIsCreateDialogOpen(false);
+      setNewEventoData({
+        name: "", description: "", category: "", date: "", time: "", location: "", capacity: "", price: "",
+      });
+      toast.success("Evento creado", {
+        description: "El evento ha sido creado exitosamente."
+      });
+    } catch (error) {
+      console.error("Error creating event:", error);
+      toast.error("Error", {
+        description: "No se pudo crear el evento."
+      });
+    }
+  };
+
+  const handleEditEvent = async () => {
+    if (!editingEvent) return;
+    try {
+      const response = await fetch(`/api/events/${editingEvent.event_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: editingEvent.name,
+          description: editingEvent.description,
+          category: editingEvent.category,
+          date: editingEvent.date,
+          time: editingEvent.time,
+          location: editingEvent.location,
+          capacity: editingEvent.capacity,
+          price: editingEvent.price,
+          status: editingEvent.status,
+          organizer: editingEvent.organizer,
+          logo_url: editingEvent.logo_url,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar el evento');
+      }
+
+      const updatedEvent: Event = await response.json();
+      const formattedUpdatedEvent = {
+        ...updatedEvent,
+        date: new Date(updatedEvent.date).toLocaleDateString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit' }),
+        time: new Date(updatedEvent.time).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        sold: Math.floor(Math.random() * updatedEvent.capacity),
+      };
+      setEvents(prev => prev.map(event => event.event_id === formattedUpdatedEvent.event_id ? formattedUpdatedEvent : event));
+      setEditingEvent(null); // Cerrar el diálogo de edición
+      toast.success("Evento actualizado", {
+        description: "El evento ha sido actualizado exitosamente."
+      });
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast.error("Error", {
+        description: "No se pudo actualizar el evento."
+      });
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      const response = await fetch(`/api/events/${eventId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar el evento');
+      }
+
+      setEvents(prev => prev.filter(event => event.event_id !== eventId));
+      toast.success("Evento eliminado", {
+        description: "El evento ha sido eliminado exitosamente."
+      });
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error("Error", {
+        description: "No se pudo eliminar el evento."
+      });
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -118,7 +236,7 @@ export default function EventsPage() {
   const filteredEvents = events.filter(
     (event) =>
       event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.category.toLowerCase().includes(searchTerm.toLowerCase()),
+      (event.category && event.category.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
   return (
@@ -142,7 +260,7 @@ export default function EventsPage() {
           <div className="ml-auto px-4">
             <UserMenu />
           </div>
-        
+
       </header>
 
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
@@ -169,28 +287,28 @@ export default function EventsPage() {
                   <Label htmlFor="name" className="text-right">
                     Nombre
                   </Label>
-                  <Input id="name" className="col-span-3" placeholder="Nombre del evento" />
+                  <Input id="name" className="col-span-3" placeholder="Nombre del evento" value={newEventoData.name} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="description" className="text-right">
                     Descripción
                   </Label>
-                  <Textarea id="description" className="col-span-3" placeholder="Descripción del evento" />
+                  <Textarea id="description" className="col-span-3" placeholder="Descripción del evento" value={newEventoData.description} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">
                     Categoría
                   </Label>
-                  <Select>
+                  <Select value={newEventoData.category} onValueChange={(val) => handleSelectChange('category', val)}>
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tecnologia">Tecnología</SelectItem>
-                      <SelectItem value="musica">Música</SelectItem>
-                      <SelectItem value="educacion">Educación</SelectItem>
-                      <SelectItem value="gastronomia">Gastronomía</SelectItem>
-                      <SelectItem value="deportes">Deportes</SelectItem>
+                      <SelectItem value="Tecnología">Tecnología</SelectItem>
+                      <SelectItem value="Música">Música</SelectItem>
+                      <SelectItem value="Educación">Educación</SelectItem>
+                      <SelectItem value="Gastronomía">Gastronomía</SelectItem>
+                      <SelectItem value="Deportes">Deportes</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -198,35 +316,35 @@ export default function EventsPage() {
                   <Label htmlFor="date" className="text-right">
                     Fecha
                   </Label>
-                  <Input id="date" type="date" className="col-span-3" />
+                  <Input id="date" type="date" className="col-span-3" value={newEventoData.date} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="time" className="text-right">
                     Hora
                   </Label>
-                  <Input id="time" type="time" className="col-span-3" />
+                  <Input id="time" type="time" className="col-span-3" value={newEventoData.time} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="location" className="text-right">
                     Ubicación
                   </Label>
-                  <Input id="location" className="col-span-3" placeholder="Ubicación del evento" />
+                  <Input id="location" className="col-span-3" placeholder="Ubicación del evento" value={newEventoData.location} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="capacity" className="text-right">
                     Capacidad
                   </Label>
-                  <Input id="capacity" type="number" className="col-span-3" placeholder="Número máximo de asistentes" />
+                  <Input id="capacity" type="number" className="col-span-3" placeholder="Número máximo de asistentes" value={newEventoData.capacity} onChange={handleInputChange} />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="price" className="text-right">
                     Precio
                   </Label>
-                  <Input id="price" type="number" className="col-span-3" placeholder="Precio por entrada" />
+                  <Input id="price" type="number" className="col-span-3" placeholder="Precio por entrada" value={newEventoData.price} onChange={handleInputChange} />
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" onClick={() => setIsCreateDialogOpen(false)}>
+                <Button type="submit" onClick={handleCreateEvent}>
                   Crear Evento
                 </Button>
               </DialogFooter>
@@ -273,7 +391,7 @@ export default function EventsPage() {
               </TableHeader>
               <TableBody>
                 {filteredEvents.map((event) => (
-                  <TableRow key={event.id}>
+                  <TableRow key={event.event_id}>
                     <TableCell>
                       <div>
                         <div className="font-medium">{event.name}</div>
@@ -306,7 +424,7 @@ export default function EventsPage() {
                             {event.sold}/{event.capacity}
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {Math.round((event.sold / event.capacity) * 100)}% ocupado
+                            {Math.round(((event.sold || 0) / event.capacity) * 100)}% ocupado
                           </div>
                         </div>
                       </div>
@@ -323,7 +441,7 @@ export default function EventsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setEditingEvent(event)}>
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
@@ -336,7 +454,7 @@ export default function EventsPage() {
                             Ver Entradas
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteEvent(event.event_id)}>
                             <Trash2 className="mr-2 h-4 w-4" />
                             Eliminar
                           </DropdownMenuItem>
@@ -349,6 +467,100 @@ export default function EventsPage() {
             </Table>
           </CardContent>
         </Card>
+
+        {/* Dialogo de Edición de Evento */}
+        <Dialog open={!!editingEvent} onOpenChange={() => setEditingEvent(null)}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Editar Evento</DialogTitle>
+              <DialogDescription>Modifica la información del evento</DialogDescription>
+            </DialogHeader>
+            {editingEvent && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editName" className="text-right">
+                    Nombre
+                  </Label>
+                  <Input id="editName" className="col-span-3" value={editingEvent.name} onChange={(e) => setEditingEvent({ ...editingEvent, name: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editDescription" className="text-right">
+                    Descripción
+                  </Label>
+                  <Textarea id="editDescription" className="col-span-3" value={editingEvent.description || ''} onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editCategory" className="text-right">
+                    Categoría
+                  </Label>
+                  <Select value={editingEvent.category || ''} onValueChange={(val) => setEditingEvent({ ...editingEvent, category: val })}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Selecciona una categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Tecnología">Tecnología</SelectItem>
+                      <SelectItem value="Música">Música</SelectItem>
+                      <SelectItem value="Educación">Educación</SelectItem>
+                      <SelectItem value="Gastronomía">Gastronomía</SelectItem>
+                      <SelectItem value="Deportes">Deportes</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editDate" className="text-right">
+                    Fecha
+                  </Label>
+                  <Input id="editDate" type="date" className="col-span-3" value={editingEvent.date} onChange={(e) => setEditingEvent({ ...editingEvent, date: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editTime" className="text-right">
+                    Hora
+                  </Label>
+                  <Input id="editTime" type="time" className="col-span-3" value={editingEvent.time} onChange={(e) => setEditingEvent({ ...editingEvent, time: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editLocation" className="text-right">
+                    Ubicación
+                  </Label>
+                  <Input id="editLocation" className="col-span-3" value={editingEvent.location} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editCapacity" className="text-right">
+                    Capacidad
+                  </Label>
+                  <Input id="editCapacity" type="number" className="col-span-3" value={editingEvent.capacity} onChange={(e) => setEditingEvent({ ...editingEvent, capacity: parseInt(e.target.value) })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editPrice" className="text-right">
+                    Precio
+                  </Label>
+                  <Input id="editPrice" type="number" className="col-span-3" value={editingEvent.price} onChange={(e) => setEditingEvent({ ...editingEvent, price: parseFloat(e.target.value) })} />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="editStatus" className="text-right">
+                    Estado
+                  </Label>
+                  <Select value={editingEvent.status} onValueChange={(val) => setEditingEvent({ ...editingEvent, status: val })}>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Selecciona un estado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Activo">Activo</SelectItem>
+                      <SelectItem value="Vendiendo">Vendiendo</SelectItem>
+                      <SelectItem value="Próximo">Próximo</SelectItem>
+                      <SelectItem value="Borrador">Borrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button type="submit" onClick={handleEditEvent}>
+                Guardar Cambios
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </>
   )

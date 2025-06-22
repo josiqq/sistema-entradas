@@ -41,14 +41,46 @@ import {
   QrCode,
   Upload,
   Maximize,
+  RefreshCw,
+  Check,
   X,
 } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { TicketPreview } from "@/components/ticket-preview"
 import { TemplateGallery } from "@/components/template-gallery"
 import { ColorPicker } from "@/components/color-picker"
 import { UserMenu } from "@/components/user-menu"
 import { useAuth } from "@/contexts/auth-context"
+import { toast } from "sonner"
+
+interface SavedTicketDesign {
+  id: string
+  name: string
+  templateId: string
+  eventName: string
+  date: string
+  time: string
+  location: string
+  ticketNumber: string
+  ticketType: string
+  price: string
+  qrCode: string
+  category: string
+  organizer: string
+  logo?: string
+  primaryColor: string
+  secondaryColor: string
+  backgroundColor: string
+  textColor: string
+  fontFamily: string
+  fontSize: number
+  borderRadius: number
+  orientation: string
+  format: string
+  userId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export default function TicketDesignerPage() {
   const { user } = useAuth()
@@ -83,32 +115,118 @@ export default function TicketDesignerPage() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showTemplateGallery, setShowTemplateGallery] = useState(false)
   const [previewMode, setPreviewMode] = useState("desktop")
-
-  const templates = [
-    { id: "modern", name: "Moderno", category: "Profesional", preview: "/placeholder.svg?height=200&width=300" },
-    { id: "elegant", name: "Elegante", category: "Premium", preview: "/placeholder.svg?height=200&width=300" },
-    { id: "minimal", name: "Minimalista", category: "Simple", preview: "/placeholder.svg?height=200&width=300" },
-    { id: "colorful", name: "Colorido", category: "Creativo", preview: "/placeholder.svg?height=200&width=300" },
-    { id: "corporate", name: "Corporativo", category: "Profesional", preview: "/placeholder.svg?height=200&width=300" },
-    { id: "festival", name: "Festival", category: "Música", preview: "/placeholder.svg?height=200&width=300" },
-  ]
+  const [savedTemplates, setSavedTemplates] = useState<SavedTicketDesign[]>([]);
 
   const fontFamilies = ["Inter", "Roboto", "Open Sans", "Montserrat", "Poppins", "Lato", "Source Sans Pro", "Nunito"]
 
+  useEffect(() => {
+    const fetchSavedTemplates = async () => {
+      try {
+        const response = await fetch('/api/ticket-designs');
+        if (!response.ok) {
+          throw new Error('Failed to fetch saved designs');
+        }
+        const data: SavedTicketDesign[] = await response.json();
+        setSavedTemplates(data);
+      } catch (error) {
+        console.error("Error fetching saved templates:", error);
+        toast.error("Error al cargar plantillas", {
+          description: "No se pudieron cargar los diseños guardados."
+        });
+      }
+    };
+    fetchSavedTemplates();
+  }, []);
+
   const handleDownloadPDF = () => {
-    // Simulación de descarga PDF
     console.log("Descargando PDF de alta calidad...")
   }
 
-  const handleSaveTemplate = () => {
-    // Simulación de guardado
-    console.log("Guardando plantilla personalizada...")
+  const handleSaveTemplate = async () => {
+    try {
+      const designToSave = {
+        name: `${ticketData.eventName} - ${selectedTemplate} Design`,
+        templateId: selectedTemplate,
+        ...ticketData,
+        ...designSettings,
+        userId: user?.id,
+      };
+
+      const response = await fetch('/api/ticket-designs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(designToSave),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al guardar el diseño del ticket');
+      }
+
+      const savedDesign: SavedTicketDesign = await response.json();
+      setSavedTemplates((prev) => [...prev, savedDesign]);
+      toast.success("Diseño de ticket guardado", {
+        description: "La plantilla del ticket ha sido guardada exitosamente."
+      });
+
+    } catch (error) {
+      console.error("Error guardando plantilla:", error);
+      toast.error("Error al guardar el diseño", {
+        description: "No se pudo guardar la plantilla del ticket."
+      });
+    }
   }
 
   const handleSharePreview = () => {
     // Simulación de compartir
     console.log("Generando link de preview...")
   }
+
+  const handleLoadSelectedTemplate = (templateId: string) => {
+    const templateToLoad = savedTemplates.find(t => t.id === templateId);
+    if (templateToLoad) {
+      setTicketData({
+        eventName: templateToLoad.eventName,
+        date: templateToLoad.date,
+        time: templateToLoad.time,
+        location: templateToLoad.location,
+        ticketNumber: templateToLoad.ticketNumber,
+        ticketType: templateToLoad.ticketType,
+        price: templateToLoad.price,
+        qrCode: templateToLoad.qrCode,
+        category: templateToLoad.category,
+        organizer: templateToLoad.organizer,
+        logo: templateToLoad.logo,
+      });
+      setDesignSettings({
+        primaryColor: templateToLoad.primaryColor,
+        secondaryColor: templateToLoad.secondaryColor,
+        backgroundColor: templateToLoad.backgroundColor,
+        textColor: templateToLoad.textColor,
+        fontFamily: templateToLoad.fontFamily,
+        fontSize: templateToLoad.fontSize,
+        borderRadius: templateToLoad.borderRadius,
+        orientation: templateToLoad.orientation,
+        format: templateToLoad.format,
+      });
+      setSelectedTemplate(templateToLoad.templateId); // Actualizar la plantilla base seleccionada
+      toast.info("Plantilla cargada", {
+        description: `Se ha cargado el diseño "${templateToLoad.name}".`
+      });
+    } else {
+      toast.error("Error al cargar plantilla", {
+        description: "La plantilla seleccionada no se encontró."
+      });
+    }
+  };
+
+  const allTemplates = [
+    ...savedTemplates.map(design => ({
+      id: design.id,
+      name: design.name,
+      category: design.category,
+      preview: design.logo || "/placeholder.svg?height=200&width=300",
+    }))
+  ];
 
   return (
     <>
@@ -396,13 +514,13 @@ export default function TicketDesignerPage() {
                   </div>
                 </CardContent>
               </Card>
+
             </div>
           </ScrollArea>
         </div>
 
         {/* Preview Area */}
-        {/* Adjusted to use `relative` positioning for QR button, and flexible height for preview */}
-        <div className="flex-1 flex flex-col relative"> {/* Added relative for QR button positioning */}
+        <div className="flex-1 flex flex-col">
           {/* Preview Controls */}
           <div className="border-b bg-muted/30 p-4">
             <div className="flex items-center justify-between">
@@ -453,28 +571,29 @@ export default function TicketDesignerPage() {
           </div>
 
           {/* Preview Content */}
-          {/* Removed min-h-full to allow content to dictate height, and adjusted padding */}
-          <div className="flex-1 bg-gray-50 p-8 flex items-center justify-center overflow-auto"> {/* Changed p-8 to p-4, removed min-h-full */}
-            <div
-              className="transition-all duration-300"
-              style={{
-                transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                transformOrigin: "center",
-              }}
-            >
-              <TicketPreview
-                ticketData={ticketData}
-                designSettings={designSettings}
-                template={selectedTemplate}
-                previewMode={previewMode}
-              />
+          <div className="flex-1 bg-gray-50 p-8 overflow-auto">
+            <div className="flex items-center justify-center min-h-full">
+              <div
+                className="transition-all duration-300"
+                style={{
+                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                  transformOrigin: "center",
+                }}
+              >
+                <TicketPreview
+                  ticketData={ticketData}
+                  designSettings={designSettings}
+                  template={selectedTemplate}
+                  previewMode={previewMode}
+                />
+              </div>
             </div>
           </div>
 
           {/* QR Preview Modal */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="fixed bottom-4 right-4 bg-white shadow-lg">
+              <Button variant="outline" size="sm" className="absolute bottom-4 right-4 bg-white shadow-lg">
                 <QrCode className="h-4 w-4 mr-2" />
                 Preview QR
               </Button>
@@ -503,9 +622,9 @@ export default function TicketDesignerPage() {
       <TemplateGallery
         isOpen={showTemplateGallery}
         onClose={() => setShowTemplateGallery(false)}
-        templates={templates}
+        templates={allTemplates} // Pasa todas las plantillas (predefinidas + guardadas)
         selectedTemplate={selectedTemplate}
-        onSelectTemplate={setSelectedTemplate}
+        onSelectTemplate={handleLoadSelectedTemplate} // Cambia a la nueva función de carga
       />
     </>
   )
