@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request, context: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const eventId = parseInt(context.params.id);
+    const { id } = await params;
+    const eventId = parseInt(id);
     const event = await prisma.event.findUnique({
       where: { event_id: eventId },
     });
@@ -18,9 +22,13 @@ export async function GET(request: Request, context: { params: { id: string } })
   }
 }
 
-export async function PUT(request: Request, context: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const eventId = parseInt(context.params.id);
+    const { id } = await params;
+    const eventId = parseInt(id);
     const body = await request.json();
 
     const updatedEvent = await prisma.event.update({
@@ -46,9 +54,13 @@ export async function PUT(request: Request, context: { params: { id: string } })
   }
 }
 
-export async function DELETE(request: Request, context: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const eventId = parseInt(context.params.id);
+    const { id } = await params;
+    const eventId = parseInt(id);
     await prisma.event.delete({
       where: { event_id: eventId },
     });
