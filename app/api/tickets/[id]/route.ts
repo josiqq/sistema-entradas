@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     const ticket = await prisma.ticket.findUnique({
       where: { ticket_id: ticketId },
       include: {
@@ -21,9 +25,13 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     const body = await request.json();
 
     const updatedTicket = await prisma.ticket.update({
@@ -46,9 +54,13 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const ticketId = params.id;
+    const { id } = await params;
+    const ticketId = id;
     await prisma.ticket.delete({
       where: { ticket_id: ticketId },
     });

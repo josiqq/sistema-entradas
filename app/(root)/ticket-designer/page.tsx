@@ -195,7 +195,7 @@ export default function TicketDesignerPage() {
         qrCode: templateToLoad.qrCode,
         category: templateToLoad.category,
         organizer: templateToLoad.organizer,
-        logo: templateToLoad.logo,
+        logo: templateToLoad.logo || "/placeholder.svg?height=60&width=200",
       });
       setDesignSettings({
         primaryColor: templateToLoad.primaryColor,
