@@ -41,8 +41,6 @@ import {
   QrCode,
   Upload,
   Maximize,
-  RefreshCw,
-  Check,
   X,
 } from "lucide-react"
 import { useState } from "react"
@@ -398,49 +396,13 @@ export default function TicketDesignerPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Validación de Diseño */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Validación de Diseño</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs">Contraste de Color</span>
-                    <Badge className="bg-green-100 text-green-800">
-                      <Check className="h-3 w-3 mr-1" />
-                      Bueno
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs">Legibilidad QR</span>
-                    <Badge className="bg-green-100 text-green-800">
-                      <Check className="h-3 w-3 mr-1" />
-                      Óptima
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs">Tamaño de Fuente</span>
-                    <Badge className="bg-yellow-100 text-yellow-800">
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Aceptable
-                    </Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs">Calidad de Impresión</span>
-                    <Badge className="bg-green-100 text-green-800">
-                      <Check className="h-3 w-3 mr-1" />
-                      Alta
-                    </Badge>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </ScrollArea>
         </div>
 
         {/* Preview Area */}
-        <div className="flex-1 flex flex-col">
+        {/* Adjusted to use `relative` positioning for QR button, and flexible height for preview */}
+        <div className="flex-1 flex flex-col relative"> {/* Added relative for QR button positioning */}
           {/* Preview Controls */}
           <div className="border-b bg-muted/30 p-4">
             <div className="flex items-center justify-between">
@@ -491,29 +453,28 @@ export default function TicketDesignerPage() {
           </div>
 
           {/* Preview Content */}
-          <div className="flex-1 bg-gray-50 p-8 overflow-auto">
-            <div className="flex items-center justify-center min-h-full">
-              <div
-                className="transition-all duration-300"
-                style={{
-                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                  transformOrigin: "center",
-                }}
-              >
-                <TicketPreview
-                  ticketData={ticketData}
-                  designSettings={designSettings}
-                  template={selectedTemplate}
-                  previewMode={previewMode}
-                />
-              </div>
+          {/* Removed min-h-full to allow content to dictate height, and adjusted padding */}
+          <div className="flex-1 bg-gray-50 p-8 flex items-center justify-center overflow-auto"> {/* Changed p-8 to p-4, removed min-h-full */}
+            <div
+              className="transition-all duration-300"
+              style={{
+                transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                transformOrigin: "center",
+              }}
+            >
+              <TicketPreview
+                ticketData={ticketData}
+                designSettings={designSettings}
+                template={selectedTemplate}
+                previewMode={previewMode}
+              />
             </div>
           </div>
 
           {/* QR Preview Modal */}
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="absolute bottom-4 right-4 bg-white shadow-lg">
+              <Button variant="outline" size="sm" className="fixed bottom-4 right-4 bg-white shadow-lg">
                 <QrCode className="h-4 w-4 mr-2" />
                 Preview QR
               </Button>

@@ -205,18 +205,6 @@ export function TicketPreview({ ticketData, designSettings, template, previewMod
           </div>
         </div>
       </Card>
-
-      {/* Terms and Conditions */}
-      <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-        <h4 className="font-semibold text-sm mb-2">Términos y Condiciones</h4>
-        <ul className="text-xs text-gray-600 space-y-1">
-          <li>• Esta entrada es válida únicamente para el evento especificado</li>
-          <li>• Debe presentarse junto con identificación oficial</li>
-          <li>• No se permiten reembolsos después de la compra</li>
-          <li>• El organizador se reserva el derecho de admisión</li>
-          <li>• Prohibido el ingreso de alimentos y bebidas externas</li>
-        </ul>
-      </div>
     </div>
   )
 }

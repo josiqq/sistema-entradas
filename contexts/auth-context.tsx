@@ -1,37 +1,41 @@
 // contexts/auth-context.tsx
-"use client"
+"use client";
 
-import type React from "react"
-import { createContext, useContext, useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import type React from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  status: string
-  phone?: string
-  avatar?: string
-  lastAccess?: string
-  createdAt: string
-  permissions: string[]
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  phone?: string;
+  avatar?: string;
+  lastAccess?: string;
+  createdAt: string;
+  permissions: string[];
 }
 
 interface AuthContextType {
-  user: User | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  loginError: string | null
-  isInitialized: boolean
-  login: (email: string, password: string, rememberMe?: boolean) => Promise<boolean>
-  logout: () => void
-  clearError: () => void
-  hasPermission: (permission: string) => boolean
-  isAdmin: () => boolean
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  loginError: string | null;
+  isInitialized: boolean;
+  login: (
+    email: string,
+    password: string,
+    rememberMe?: boolean
+  ) => Promise<boolean>;
+  logout: () => void;
+  clearError: () => void;
+  hasPermission: (permission: string) => boolean;
+  isAdmin: () => boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Credenciales de prueba
 const TEST_USERS = [
@@ -59,7 +63,14 @@ const TEST_USERS = [
     avatar: "/placeholder.svg?height=32&width=32",
     lastAccess: "2024-01-20 09:15:00",
     createdAt: "2024-01-05",
-    permissions: ["events.create", "events.edit", "events.delete", "tickets.create", "tickets.edit", "stats.view"],
+    permissions: [
+      "events.create",
+      "events.edit",
+      "events.delete",
+      "tickets.create",
+      "tickets.edit",
+      "stats.view",
+    ],
   },
   {
     id: "3",
@@ -87,36 +98,42 @@ const TEST_USERS = [
     createdAt: "2024-01-15",
     permissions: ["dashboard.view", "stats.view"],
   },
-]
+];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [loginError, setLoginError] = useState<string | null>(null)
-  const [isInitialized, setIsInitialized] = useState(false)
-  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const router = useRouter();
 
   // Verificar sesión existente al cargar
   useEffect(() => {
-    const savedUser = localStorage.getItem("eventmanager_user")
+    const savedUser = localStorage.getItem("eventmanager_user");
     if (savedUser) {
       try {
-        setUser(JSON.parse(savedUser))
+        setUser(JSON.parse(savedUser));
       } catch (error) {
-        localStorage.removeItem("eventmanager_user")
+        localStorage.removeItem("eventmanager_user");
       }
     }
-    setIsInitialized(true)
-  }, [])
+    setIsInitialized(true);
+  }, []);
 
-  const login = async (email: string, password: string, rememberMe = false): Promise<boolean> => {
-    setIsLoading(true)
-    setLoginError(null)
+  const login = async (
+    email: string,
+    password: string,
+    rememberMe = false
+  ): Promise<boolean> => {
+    setIsLoading(true);
+    setLoginError(null);
 
     // Simular delay de red
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    const foundUser = TEST_USERS.find((u) => u.email === email && u.password === password)
+    const foundUser = TEST_USERS.find(
+      (u) => u.email === email && u.password === password
+    );
 
     if (foundUser) {
       const userData: User = {
@@ -130,42 +147,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         lastAccess: foundUser.lastAccess,
         createdAt: foundUser.createdAt,
         permissions: foundUser.permissions,
-      }
+      };
 
-      setUser(userData)
+      setUser(userData);
 
       if (rememberMe) {
-        localStorage.setItem("eventmanager_user", JSON.stringify(userData))
+        localStorage.setItem("eventmanager_user", JSON.stringify(userData));
       }
 
-      setIsLoading(false)
-      return true
+      setIsLoading(false);
+      return true;
     } else {
-      setLoginError("Credenciales incorrectas. Verifica tu email y contraseña.")
-      setIsLoading(false)
-      return false
+      setLoginError(
+        "Credenciales incorrectas. Verifica tu email y contraseña."
+      );
+      setIsLoading(false);
+      return false;
     }
-  }
+  };
 
   const logout = () => {
-    setUser(null)
-    localStorage.removeItem("eventmanager_user")
-    setLoginError(null)
-    router.push("/login")
-  }
+    setUser(null);
+    localStorage.removeItem("eventmanager_user");
+    setLoginError(null);
+    router.push("/login");
+  };
 
   const clearError = () => {
-    setLoginError(null)
-  }
+    setLoginError(null);
+  };
 
   const hasPermission = (permission: string): boolean => {
-    if (!user) return false
-    return user.permissions.includes("all") || user.permissions.includes(permission)
-  }
+    if (!user || !user.permissions) return false;
+    return (
+      user.permissions.includes("all") || user.permissions.includes(permission)
+    );
+  };
 
   const isAdmin = (): boolean => {
-    return user?.role === "Administrador" || false
-  }
+    return user?.role === "Administrador" || false;
+  };
 
   const value = {
     user,
@@ -178,7 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearError,
     hasPermission,
     isAdmin,
-  }
+  };
 
   // No renderizar hasta que se inicialice
   if (!isInitialized) {
@@ -186,16 +207,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
-    )
+    );
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider")
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
+  return context;
 }

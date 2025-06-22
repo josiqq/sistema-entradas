@@ -92,7 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       adminOnly: true,
     },
     {
-      title: "Diseño de ticket",
+      title: "Diseño de Entradas",
       url: "/ticket-designer",
       icon: Tickets,
       adminOnly: true,
