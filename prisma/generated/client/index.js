@@ -236,6 +236,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -246,7 +247,7 @@ const config = {
   },
   "inlineSchema": "datasource db {\n  provider = \"postgresql\" // O \"mysql\", \"sqlite\", etc.\n  url      = env(\"DATABASE_URL\")\n}\n\ngenerator client {\n  provider      = \"prisma-client-js\"\n  output        = \"./generated/client\"\n  binaryTargets = [\"native\", \"rhel-openssl-3.0.x\"]\n}\n\nmodel User {\n  id            String         @id @default(cuid()) // O @default(uuid()) si prefieres UUIDs\n  name          String\n  email         String         @unique\n  password      String // Agregado para el login\n  role          String\n  status        String\n  phone         String?\n  avatar        String?\n  lastAccess    DateTime?      @map(\"last_access\") // Convertido a Snake_case para la base de datos si usas MySQL/PostgreSQL\n  createdAt     DateTime       @default(now()) @map(\"created_at\")\n  permissions   String[] // Almacenar como un array de strings si tu DB lo soporta (ej. PostgreSQL), o JSON\n  ticketDesigns TicketDesign[] // <-- CAMBIO: Añadido el campo de relación inverso\n\n  @@map(\"Users\")\n}\n\nmodel Event {\n  event_id    Int      @id @default(autoincrement()) @map(\"event_id\")\n  name        String   @db.VarChar(255)\n  description String?\n  date        DateTime @db.Date\n  time        DateTime @db.Time\n  location    String   @db.VarChar(255)\n  capacity    Int\n  price       Decimal  @db.Decimal(10, 2)\n  status      String   @db.VarChar(50)\n  category    String?  @db.VarChar(100)\n  organizer   String?  @db.VarChar(255)\n  logo_url    String?  @db.VarChar(255)\n  created_at  DateTime @default(now()) @map(\"created_at\")\n  updated_at  DateTime @default(now()) @updatedAt @map(\"updated_at\")\n  tickets     Ticket[]\n\n  @@map(\"Events\")\n}\n\nmodel TicketDesign {\n  id              String   @id @default(cuid())\n  name            String\n  templateId      String\n  eventName       String\n  date            String\n  time            String\n  location        String\n  ticketNumber    String\n  ticketType      String\n  price           String\n  qrCode          String\n  category        String\n  organizer       String\n  logo            String?\n  primaryColor    String\n  secondaryColor  String\n  backgroundColor String\n  textColor       String\n  fontFamily      String\n  fontSize        Int\n  borderRadius    Int\n  orientation     String\n  format          String\n  userId          String?\n  user            User?    @relation(fields: [userId], references: [id])\n  createdAt       DateTime @default(now())\n  updatedAt       DateTime @updatedAt\n  Ticket          Ticket[]\n}\n\nmodel Ticket {\n  ticket_id     String    @id @map(\"ticket_id\") @db.VarChar(50)\n  event_id      Int       @map(\"event_id\")\n  holder_name   String    @db.VarChar(255)\n  holder_email  String    @db.VarChar(255)\n  type          String    @db.VarChar(50)\n  price         Decimal   @db.Decimal(10, 2)\n  status        String    @db.VarChar(50)\n  purchase_date DateTime  @db.Date\n  qr_code       String    @unique @db.VarChar(255)\n  is_scanned    Boolean   @default(false) @map(\"is_scanned\")\n  scanned_time  DateTime?\n  gate_used     String?   @db.VarChar(50)\n  created_at    DateTime  @default(now()) @map(\"created_at\")\n  updated_at    DateTime  @default(now()) @updatedAt @map(\"updated_at\")\n\n  event          Event         @relation(fields: [event_id], references: [event_id])\n  ticketDesignId String?       @map(\"ticket_design_id\")\n  ticketDesign   TicketDesign? @relation(fields: [ticketDesignId], references: [id])\n\n  @@map(\"Tickets\")\n}\n",
   "inlineSchemaHash": "19075a4675471c92da807fd610896fc6fcdd44e77b61396bf0ca3b84bf32c39a",
-  "copyEngine": true
+  "copyEngine": false
 }
 
 const fs = require('fs')
@@ -283,13 +284,3 @@ const PrismaClient = getPrismaClient(config)
 exports.PrismaClient = PrismaClient
 Object.assign(exports, Prisma)
 
-// file annotations for bundling tools to include these files
-path.join(__dirname, "libquery_engine-debian-openssl-3.0.x.so.node");
-path.join(process.cwd(), "prisma/generated/client/libquery_engine-debian-openssl-3.0.x.so.node")
-
-// file annotations for bundling tools to include these files
-path.join(__dirname, "libquery_engine-rhel-openssl-3.0.x.so.node");
-path.join(process.cwd(), "prisma/generated/client/libquery_engine-rhel-openssl-3.0.x.so.node")
-// file annotations for bundling tools to include these files
-path.join(__dirname, "schema.prisma");
-path.join(process.cwd(), "prisma/generated/client/schema.prisma")
